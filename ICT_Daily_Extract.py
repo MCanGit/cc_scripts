@@ -41,3 +41,4 @@ df["status_final"] = df["Event_Name"]
 df["status_final"] = np.where(df["status_final"].isnull(), df["Updated_Status"], df["status_final"])
 df["status_final"] = np.where(df["status_final"].isnull(), df["System_Generated_Status"], df["status_final"])
 
+print(df["Shift_Start"])
