@@ -246,19 +246,6 @@ def secret_exit_list():
 if not s_exit.exit_date.index.empty: secret_exit_list()
 
 df4 = df4.drop(columns=['e_id', 'exit_date'])
-#secretExitList = secretExitList.query('exit_date > @today')
-#df4 = df4.merge(secretExitList[["e_id", "exit_date", "New"]], how='left', left_on=['EID', 'date'],
-#                 right_on=['e_id', 'exit_date'])
-
-#df4['exit_date'] = df4.groupby('EID')['exit_date'].fillna(method='ffill')
-
-#df4["value"] = np.where((df4["date"] > df4["exit_date"]) &
-#                        (df4["EID"].isin(secretExitList["e_id"])),
-#                        "-", df4["value"])
-
-#df4["roll_off/reassignment"] = np.where(df4["date"] == df4["exit_date"], 'roll_off', df4["roll_off/reassignment"])
-
-#df4 = df4.drop(columns=['e_id', 'New', 'exit_date'])
 
 # -- CF FCST Absenteeism
 current_day = datetime.today().date()
