@@ -40,7 +40,7 @@ CrossTrainingPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\01. Magic List\H
 ExitsListPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\04. RTA\CO IW Absenteeism v.12.5 ICT.xlsb"
 MMT_DailyPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\02. MMT\Parquet\Latest_MMT.parquet"
 AdjustmentListPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\04. RTA\Adjustment List\IW_AttendanceCompilation_2023.xlsx"
-
+CF_FCST_Path = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\11. CF FCST\CF_FCST.xlsx"
 
 OutputName = str('Unpivot ' + File[-6:])
 #ExportPath = '//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/09. Daily Unpivot/%s.csv'%OutputName
@@ -237,21 +237,95 @@ df4["tenure"] = np.select(dmr_cond, dmr_res, None)
 df4["tenure"] = df4.groupby('EID')['tenure'].fillna(method="ffill")
 
 # secret exit list
-secretExitList = pd.read_excel(CrossTrainingPath, sheet_name='Secret Exit List')
+#secretExitList = pd.read_excel(CrossTrainingPath, sheet_name='Secret Exit List')
 
 #secretExitList = secretExitList.query('exit_date > @today')
-df4 = df4.merge(secretExitList[["e_id", "exit_date", "New"]], how='left', left_on=['EID', 'date'],
-                 right_on=['e_id', 'exit_date'])
+#df4 = df4.merge(secretExitList[["e_id", "exit_date", "New"]], how='left', left_on=['EID', 'date'],
+#                 right_on=['e_id', 'exit_date'])
 
+#df4['exit_date'] = df4.groupby('EID')['exit_date'].fillna(method='ffill')
+#df4['New'] = df4.groupby('EID')['New'].fillna(method='ffill')
+#df4["value"] = np.where((df4["date"] > df4["exit_date"]) &
+#                        (df4["EID"].isin(secretExitList["e_id"])),
+#                        "-", df4["value"])
+
+#df4["roll_off/reassignment"] = np.where(df4["date"] == df4["exit_date"], 'roll_off', None)
+
+#df4 = df4.drop(columns=['e_id', 'New', 'exit_date'])
+
+# secret exit list
+secretExitList = pd.read_excel(CrossTrainingPath, sheet_name='Secret Exit List')
+secretExitList = secretExitList.query('exit_date > @today')
+
+df4 = df4.merge(secretExitList[["e_id", "exit_date"]], how='left', left_on=['EID', 'date'],
+                right_on=['e_id', 'exit_date'])
 df4['exit_date'] = df4.groupby('EID')['exit_date'].fillna(method='ffill')
-df4['New'] = df4.groupby('EID')['New'].fillna(method='ffill')
-df4["value"] = np.where((df4["date"] > df4["exit_date"]) &
-                        (df4["EID"].isin(secretExitList["e_id"])),
-                        "-", df4["value"])
+s_exit = df4.query('exit_date.notnull()')
 
-df4["roll_off/reassignment"] = np.where(df4["date"] == df4["exit_date"], 'roll_off', None)
+def secret_exit_list():
+    df4["value"] = np.where((df4["date"] > df4["exit_date"]) &
+                            (df4["EID"].isin(secretExitList["e_id"])),
+                            "-", df4["value"])
+    df4["roll_off/reassignment"] = np.where(df4["date"] == df4["exit_date"], 'roll_off', df4["roll_off/reassignment"])
 
-df4 = df4.drop(columns=['e_id', 'New', 'exit_date'])
+if not s_exit.exit_date.index.empty: secret_exit_list()
+
+df4 = df4.drop(columns=['e_id', 'exit_date'])
+
+# -- CF FCST Absenteeism
+current_day = datetime.today().date()
+cf_backup = 'Backup ' + str(current_day) + ' MF ' + File[-6:]
+cf_backup_output = "C:/Users/mario.canudo/Desktop/Unpivot WFH/11. CF FCST/Backup/%s.xlsx"%cf_backup
+cf_fcst = pd.read_excel(CF_FCST_Path)
+cf_fcst.to_excel(cf_backup_output, index=False)
+cf_fcst.columns = cf_fcst.columns.str.replace(" - ", "_")
+cf_fcst.columns = cf_fcst.columns.str.replace(" ", "_")
+cf_fcst.columns = cf_fcst.columns + "_cf"
+cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+cf_fcst = cf_fcst.query('Ticket_decision_cf == "Consider in Forecast"')
+
+df4["ABS_FCST"] = np.nan
+
+cf_abs = cf_fcst.query('Forecasted_Change_cf == "Absenteeism"')
+df4 = df4.merge(cf_abs[["EID_cf", "Start_Date_cf", "End_Date_cf"]], how='left', left_on=['EID', 'date'], right_on=['EID_cf', 'Start_Date_cf'])
+
+def fcst_absent():
+    df4['Start_Date_cf'] = df4.groupby('EID')['Start_Date_cf'].fillna(method='ffill')
+    df4['End_Date_cf'] = df4.groupby('EID')['End_Date_cf'].fillna(method='ffill')
+    df4["ABS_FCST"] = np.where((df4["date"] >= df4["Start_Date_cf"]) & (df4["date"] <= df4["End_Date_cf"]) &
+                            (df4["value"] != "L1") & (df4["value"] != "L2"), 1, df4["ABS_FCST"])
+
+if not cf_abs.Start_Date_cf.index.empty: fcst_absent()
+
+df4 = df4.drop(columns=["EID_cf", "Start_Date_cf", "End_Date_cf"])
+
+# -- CF FCST LOA
+cf_loa = cf_fcst.query('Forecasted_Change_cf == "LOA"')
+df4 = df4.merge(cf_loa[["EID_cf", "Start_Date_cf", "End_Date_cf"]], how='left',  left_on=['EID', 'date'], right_on=['EID_cf', 'Start_Date_cf'])
+
+def fcst_loa():
+    df4['Start_Date_cf'] = df4.groupby('EID')['Start_Date_cf'].fillna(method='ffill')
+    df4['End_Date_cf'] = df4.groupby('EID')['End_Date_cf'].fillna(method='ffill')
+    df4["ABS_FCST"] = np.where((df4["date"] >= df4["Start_Date_cf"]) & (df4["date"] <= df4["End_Date_cf"]) &
+                            (df4["value"] != "L1") & (df4["value"] != "L2"), 1, df4["ABS_FCST"])
+
+if not cf_loa.Start_Date_cf.index.empty: fcst_loa()
+
+df4 = df4.drop(columns=["EID_cf", "Start_Date_cf", "End_Date_cf"])
+
+# -- CF FCST ROLL OFF
+cf_rolloff = cf_fcst.query('Forecasted_Change_cf == "Managed Attrition"')
+cf_rolloff = cf_rolloff.rename(columns={"Managed_attrition_DATE_FORECASTED_cf":"roll_off_cf"})
+df4 = df4.merge(cf_rolloff[["EID_cf", "roll_off_cf"]], how='left', left_on=['EID', 'date'], right_on=['EID_cf', 'roll_off_cf'])
+
+def fcst_rolloff():
+    df4['roll_off_cf'] = df4.groupby('EID')['roll_off_cf'].fillna(method='ffill')
+    df4["ABS_FCST"] = np.where((df4["date"] > df4["roll_off_cf"]) &
+                               (df4["value"] != '-'), 1, df4["ABS_FCST"])
+
+if not cf_rolloff.roll_off_cf.index.empty: fcst_rolloff()
+df4 = df4.drop(columns=["EID_cf", "roll_off_cf"])
+
 
 # -- Conditional Columns
 
