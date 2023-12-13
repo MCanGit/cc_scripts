@@ -176,7 +176,6 @@ shrink = shrink.rename(columns={"Username":"enterprise_id", "Status final":"stat
 #shrink["roster_date"] = pd.to_datetime(shrink["roster_date"], unit='d', origin='12-30-1899').dt.strftime('%m/%d/%Y')
 
 shrink["status_final_sh"] = shrink["status_final_sh"].astype('string')
-print(shrink.status_final_sh.value_counts())
 mmt = mmt.merge(shrink, how='left', on=['enterprise_id', 'roster_date'])
 
 # Fill NULLs from Adjustment List
