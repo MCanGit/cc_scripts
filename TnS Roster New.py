@@ -2,8 +2,8 @@ import pandas as pd
 from pandas.tseries.offsets import *
 
 # --- Manual Change Required---
-RWeek='12-01-2023'
-File = 'GLOBAL_ROSTER Lisbon WE112423'
+RWeek='12-15-2023'
+File = 'GLOBAL_ROSTER Lisbon WE120823'
 # --- Manual Change Required---
 
 # Path to folder -- adjust if required

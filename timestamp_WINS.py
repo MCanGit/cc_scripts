@@ -1,7 +1,7 @@
 import pandas as pd
 
 # --- Manual Change Required---
-File = 'WINS Timestamp Template - 12.10 '
+File = 'WINS Timestamp Template - 12.12 - Partial'
 
 # --- File Path and Export Destination Path---
 ImportPath = "//lisfs1003/Honey_Badger$/Operations - Management/Lisbon Reporting/02. Activity Code/02. Time Stamps/02. Timestamp - Transformation Backup/%s.xlsm" %File
@@ -50,4 +50,4 @@ df["non-fb_learning"] = df["non-fb_learning"].astype(float)
 df.to_parquet(ExportPath)
 #df.to_csv('//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/test.csv')
 
-print(str(File) + ' done')
+print(str(File) + ' done!')

@@ -281,8 +281,8 @@ cf_fcst.to_excel(cf_backup_output, index=False)
 cf_fcst.columns = cf_fcst.columns.str.replace(" - ", "_")
 cf_fcst.columns = cf_fcst.columns.str.replace(" ", "_")
 cf_fcst.columns = cf_fcst.columns + "_cf"
-cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
 cf_fcst = cf_fcst.query('Ticket_decision_cf == "Consider in Forecast"')
+cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
 
 df4["ABS_FCST"] = np.nan
 
