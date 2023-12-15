@@ -16,7 +16,7 @@ print(datetime.now())
 StartingDate = "4/29/2023"
 EndingDate = "1/12/2024"
 
-File = "CO - Master_Schedule - 120823"
+File = "CO - Master_Schedule - 121423"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee"
@@ -282,7 +282,37 @@ cf_fcst.columns = cf_fcst.columns.str.replace(" - ", "_")
 cf_fcst.columns = cf_fcst.columns.str.replace(" ", "_")
 cf_fcst.columns = cf_fcst.columns + "_cf"
 cf_fcst = cf_fcst.query('Ticket_decision_cf == "Consider in Forecast"')
-cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+cf_split = cf_fcst["EID_cf"].str.split('@', expand=True)
+cf_lenght = len(cf_split.columns)
+
+def single_EID(cf_fcst):
+    cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+    return cf_fcst
+
+#cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+
+def multiple_EID(cf_fcst, cf_split):
+    df_ID = cf_fcst["ID_cf"].to_frame()
+    cf_split = df_ID.join(cf_split)
+    cf_split = cf_split.rename(columns={0:"EID"})
+    df_splitmelt = pd.melt(cf_split, id_vars=["ID_cf", "EID"])
+    df_splitmelt = df_splitmelt.query('value.notnull()')
+    df_splitmelt["aux1"] = df_splitmelt["value"].str[16:]
+    df_splitmelt[["EID_1", "EID_2"]] = df_splitmelt.aux1.str.split('#', expand=True)
+    df2 = df_splitmelt[["ID_cf", "EID_2"]]
+    df2 = df2.rename(columns={"EID_2":"EID"})
+    df3 = pd.concat([cf_split, df2], ignore_index=True)
+    df3 = df3[["ID_cf", "EID"]]
+    df3 = df3.drop_duplicates(["ID_cf", "EID"])
+    df3 = df3.dropna()
+    cf_fcst = cf_fcst.merge(df3, how='left', on='ID_cf')
+    cf_fcst["EID_cf"] = cf_fcst["EID"]
+    return cf_fcst
+
+if cf_lenght > 3:
+    cf_fcst = multiple_EID(cf_fcst, cf_split)
+else:
+    cf_fcst = single_EID(cf_fcst)
 
 df4["ABS_FCST"] = np.nan
 
@@ -345,6 +375,7 @@ df4["PTO"] = np.where(df4["value"].isin(mf_codes["Vacation"]), 1, 0)
 # ABS
 #df4["ABS"] = np.where((df4["WD"] == 1) & (df4["Schedule"] < 1), 1, 0)
 df4["ABS"] = np.where((df4["WD"] == 1) & (df4["rta_status"] == "Abs"), 1, 0)
+df4["ABS"] = np.where((df4["ABS_FCST"] == 1) & (df4["iw_attendance_status"].isnull()), 1, df4["ABS"])
 
 # Leave
 df4["Leave"] = np.where(df4["value"].isin(["L1", "L2"]), 1, 0)
@@ -656,7 +687,7 @@ df4 = df4[['EID', 'role_mmt', 'NAME', 'SRT ID', 'WAVE', 'employee_status_mmt', '
  'SAP ID', 'SHIFT BLOCK', 'date', 'value', 'shift', 'week_ending', 'Schedule',
  'WD', 'LOA', 'PTO', 'ABS', 'Leave', 'iw_highlevel_status', 'iw_attendance_status','status_final_AL', 'rta_status',
  'rta_status_code', 'srtf_total_hrs', 'srtf_completed_time', 'iw_actual_time', 'WH', 'WSC_new', 'role_change', 'cross_change',
-           'roll_off/reassignment', 'tenure', 'billable']]
+           'roll_off/reassignment', 'tenure', 'billable', 'ABS_FCST']]
 
 rename_cols = {
     "role_mmt":"ROLE",
