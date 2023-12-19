@@ -4,7 +4,7 @@ import numpy as np
 import tempfile
 import shutil
 from datetime import datetime, timedelta
-import os
+
 
 # Run MMT_IW.py
 #import MMT_IW
@@ -37,16 +37,16 @@ CrossTrainingPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\01. Magic List\H
 #ExitsListPath = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/CO/%s.xlsb"%ExitsList
 ExitsListPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\04. RTA\CO IW Absenteeism v.12.5 ICT.xlsb"
 
-MMT_DailyPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/01. Parquet/%s.parquet'%MMT_Daily
-AdjustmentListPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/04. Adjustment List/%s.xlsx'%AdjustmentList
+#MMT_DailyPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/01. Parquet/%s.parquet'%MMT_Daily
+AdjustmentListPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\04. RTA\Adjustment List\IW_AttendanceCompilation_2023.xlsx"
 #Path = "//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/09. Daily Unpivot/"
 
-#CF_FCST_Path = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\11. CF FCST\CF_FCST.xlsx"
-CF_FCST_Path = r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\16. CF FCST\CF_FCST.xlsx"
+CF_FCST_Path = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\11. CF FCST\CF_FCST.xlsx"
+#CF_FCST_Path = r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\16. CF FCST\CF_FCST.xlsx"
 
 pdate = datetime.today().date()
 
-OutputName = str('Unpivot ' + File[-6:] + ' ' + str(pdate) + ' v2')
+OutputName = str('Unpivot ' + File[-6:] + ' ' + str(pdate))
 #ExportPath = '//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/09. Daily Unpivot/%s.csv'%OutputName
 
 BackupName = str('Backup Unpivot ' + ' ' + File[-6:])
@@ -223,7 +223,7 @@ df4["value"] = df4["value"].str.replace('VOM2', 'OM2')
 # -- CF FCST Absenteeism
 current_day = datetime.today().date()
 cf_backup = 'Backup ' + str(current_day) + ' MF ' + File[-6:]
-cf_backup_output = "Z:/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/16. CF FCST/01. Backup/%s.xlsx"%cf_backup
+cf_backup_output = "C:/Users/mario.canudo/Desktop/Unpivot WFH/11. CF FCST/Backup 2024/%s.xlsx"%cf_backup
 cf_fcst = pd.read_excel(CF_FCST_Path)
 cf_fcst.to_excel(cf_backup_output, index=False)
 cf_fcst.columns = cf_fcst.columns.str.replace(" - ", "_")
@@ -325,6 +325,7 @@ df4["PTO"] = np.where(df4["value"].isin(mf_codes["Vacation"]), 1, 0)
 df4["ABS"] = np.where((df4["WD"] == 1) & (df4["Schedule"] < 1), 1, 0)
 #df4["ABS"] = np.where((df4["WD"] == 1) & (df4["rta_status"] == "Abs"), 1, 0)
 df4["ABS"] = np.where((df4["ABS_FCST"] == 1), 1, df4["ABS"])
+
 
 # Leave
 df4["Leave"] = np.where(df4["value"].isin(["L1", "L2"]), 1, 0)
@@ -588,7 +589,7 @@ df4 = df4[['EID', 'ROLE', 'NAME', 'SRT ID', 'WAVE', 'STATUS', 'ROLL IN DATE', 'R
  'SAP ID', 'SHIFT BLOCK', 'date', 'value', 'shift', 'week_ending', 'Schedule',
  'WD', 'LOA', 'PTO', 'ABS', 'Leave', 'iw_highlevel_status', 'iw_attendance_status','status_final_AL', 'rta_status',
  'rta_status_code', 'unplanned_abs', 'planned_loa', 'planned_pto', 'scheduled_rta', 'srtf_total_hrs', 'WSC_new',
-            'role_change', 'cross_change', 'roll_off/reassignment']]
+            'role_change', 'cross_change', 'roll_off/reassignment', 'ABS_FCST']]
 
 rename_cols = {
     "WSC_new":"WSC"
@@ -601,13 +602,13 @@ with tempfile.TemporaryDirectory() as tempdir:
     ExportPath = tempdir + '\\' + OutputName + '.csv'
     df4.to_csv(ExportPath, index=False)
     mainsrc = ExportPath
-    maindst = "//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/08. Daily Master File/2024/"
+    maindst = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\12. Unpivot 2024"
     shutil.copy(src=mainsrc, dst=maindst)
     BackupExportPath = tempdir + '\\' + BackupName + '.csv'
-    df4.to_csv(BackupExportPath, index=False)
+    #df4.to_csv(BackupExportPath, index=False)
     backupsrc = BackupExportPath
     backupdst = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/"
-    shutil.copy(src=backupsrc, dst=backupdst)
+    #shutil.copy(src=backupsrc, dst=backupdst)
 
 #Path = os.path.realpath(Path)
 #os.startfile(Path)

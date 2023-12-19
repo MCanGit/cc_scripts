@@ -16,11 +16,11 @@ print(datetime.now())
 StartingDate = "4/29/2023"
 EndingDate = "1/12/2024"
 
-File = "CO - Master_Schedule - 121523"
+File = "CO - Master_Schedule - 121923"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee"
-ExitsList = "CO IW Absenteeism v.12.5"
+ExitsList = "CO IW Absenteeism v.12.5 ICT"
 MMT_Daily = 'Latest_MMT'
 AdjustmentList = 'IW_AttendanceCompilation_2023'
 # --
