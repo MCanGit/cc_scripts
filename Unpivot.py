@@ -257,8 +257,37 @@ cf_fcst.columns = cf_fcst.columns.str.replace(" - ", "_")
 cf_fcst.columns = cf_fcst.columns.str.replace(" ", "_")
 cf_fcst.columns = cf_fcst.columns + "_cf"
 cf_fcst = cf_fcst.query('Ticket_decision_cf == "Consider in Forecast"')
-cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+cf_split = cf_fcst["EID_cf"].str.split('@', expand=True)
+cf_lenght = len(cf_split.columns)
 
+def single_EID(cf_fcst):
+    cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+    return cf_fcst
+
+#cf_fcst[["EID_cf", "EID_cf2"]] = cf_fcst["EID_cf"].str.split("@", expand=True)
+
+def multiple_EID(cf_fcst, cf_split):
+    df_ID = cf_fcst["ID_cf"].to_frame()
+    cf_split = df_ID.join(cf_split)
+    cf_split = cf_split.rename(columns={0:"EID"})
+    df_splitmelt = pd.melt(cf_split, id_vars=["ID_cf", "EID"])
+    df_splitmelt = df_splitmelt.query('value.notnull()')
+    df_splitmelt["aux1"] = df_splitmelt["value"].str[16:]
+    df_splitmelt[["EID_1", "EID_2"]] = df_splitmelt.aux1.str.split('#', expand=True)
+    df2 = df_splitmelt[["ID_cf", "EID_2"]]
+    df2 = df2.rename(columns={"EID_2":"EID"})
+    df3 = pd.concat([cf_split, df2], ignore_index=True)
+    df3 = df3[["ID_cf", "EID"]]
+    df3 = df3.drop_duplicates(["ID_cf", "EID"])
+    df3 = df3.dropna()
+    cf_fcst = cf_fcst.merge(df3, how='left', on='ID_cf')
+    cf_fcst["EID_cf"] = cf_fcst["EID"]
+    return cf_fcst
+
+if cf_lenght > 3:
+    cf_fcst = multiple_EID(cf_fcst, cf_split)
+else:
+    cf_fcst = single_EID(cf_fcst)
 
 df4["ABS_FCST"] = np.nan
 
