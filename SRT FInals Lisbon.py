@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 # --- Manual Change Required---
-File = 'Lisbon SRT & Onboarding - 12.02 - 12.08 (WW49)'
+File = 'Lisbon SRT & Onboarding - 12.09 - 12.15 (WW50)'
 # --- Manual Change Required---
 
 ImportPath = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/02. Activity Code/04. Billable Hours/03. SRT File sent (client format)/03. Data/2023/%s.csv" % File

@@ -16,7 +16,7 @@ print(datetime.now())
 StartingDate = "4/29/2023"
 EndingDate = "1/12/2024"
 
-File = "CO - Master_Schedule - 121823"
+File = "CO - Master_Schedule - 122123"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee"
@@ -551,6 +551,10 @@ dft["role_change"] = np.where(
     np.nan
 )
 df4 = df4.merge(dft[["EID", "date", "role_change"]], on=["EID", "date"])
+
+duplicate_check = df4.groupby(["EID", "date"], as_index=False).size()
+duplicate_check = duplicate_check.query('size != 1')
+print("Duplicates:")
 
 # PBU/SLOB Change Column
 dfct = df4.query('PBU.notnull()')
