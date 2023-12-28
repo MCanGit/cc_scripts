@@ -1,7 +1,7 @@
 import pandas as pd
 
 # --- Manual Change Required---
-File = 'WINS Timestamp Template - 12.21 - Partial'
+File = 'WINS Timestamp Template - 12.26 - Partial'
 
 # --- File Path and Export Destination Path---
 ImportPath = "//lisfs1003/Honey_Badger$/Operations - Management/Lisbon Reporting/02. Activity Code/02. Time Stamps/02. Timestamp - Transformation Backup/%s.xlsm" %File

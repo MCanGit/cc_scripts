@@ -16,7 +16,7 @@ print(datetime.now())
 StartingDate = "12/30/2023"
 EndingDate = "1/10/2025"
 
-File = "121823_CO - Master_Schedule - 2024"
+File = "122623_CO - Master_Schedule - 2024"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee (2024)"
@@ -25,17 +25,17 @@ MMT_Daily = 'Latest_MMT'
 AdjustmentList = 'IW_AttendanceCompilation_2023'
 # --
 
-#ImportPath = "//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/08. Daily Master File/2024/%s.xlsb"%File
-ImportPath = "C:/Users/mario.canudo/Desktop/Unpivot 2024/%s.xlsb"%File
+ImportPath = "//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/08. Daily Master File/2024/%s.xlsb"%File
+#ImportPath = "C:/Users/mario.canudo/Desktop/Unpivot 2024/%s.xlsb"%File
 
-MFCodesPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\03. Codes\CODES MF.WH.xlsx"
-#MFCodesPath = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/000. Database/14. Codes MF & WH/%s.xlsx"%MFCodes
+#MFCodesPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\03. Codes\CODES MF.WH.xlsx"
+MFCodesPath = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/000. Database/14. Codes MF & WH/%s.xlsx"%MFCodes
 
-#CrossTrainingPath = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/11. Extras/11. Mário/.01/18. Unpivot 2024/%s.xlsx"%CrossTraining
-CrossTrainingPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\01. Magic List\Heatmap_Cross&Trainee.xlsx"
+CrossTrainingPath = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/11. Extras/11. Mário/.01/18. Unpivot 2024/%s.xlsx"%CrossTraining
+#CrossTrainingPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\01. Magic List\Heatmap_Cross&Trainee.xlsx"
 
-#ExitsListPath = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/CO/%s.xlsb"%ExitsList
-ExitsListPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\04. RTA\CO IW Absenteeism v.12.5 ICT.xlsb"
+ExitsListPath = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/CO/%s.xlsb"%ExitsList
+#xitsListPath = r"C:\Users\mario.canudo\Desktop\Unpivot WFH\04. RTA\CO IW Absenteeism v.12.5 ICT.xlsb"
 
 MMT_DailyPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/01. Parquet/%s.parquet'%MMT_Daily
 AdjustmentListPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/04. Adjustment List/%s.xlsx'%AdjustmentList

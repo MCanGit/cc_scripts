@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 
-shift_cutoff = 23
+shift_cutoff = 10
 day = 'today'
 
 

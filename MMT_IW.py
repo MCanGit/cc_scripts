@@ -1,12 +1,22 @@
 import pandas as pd
 import numpy as np
 
-
+# Manual Change required
+QSA_A1 = 'IW Update Status - 1215 QSA & Analysts'
+QSA_A2 = 'IW Update Status - 1222 QSA & Analysts2'
+TL1 = 'IW Update Status - 1215 TL & Other Roles'
+TL2 = 'IW Update Status - 1222 TLs & Other Roles2'
+# --
 
 MMT_Daily = 'MMT_IW 2023 Jan_Jun'
 MMT_DailyOngoing = 'MMT_IW 2023 July-'
 AdjustmentList = 'IW_AttendanceCompilation_2023'
 ShrinkageReport = 'Shrinkage_Report v.14 ICT'
+
+df_qsa_anal1 = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/01. Database IW/01. Attendance/CO/Closed Data/clean files/%s.xlsx"%QSA_A1
+df_qsa_anal2 = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/01. Database IW/01. Attendance/CO/Closed Data/clean files/%s.xlsx"%QSA_A2
+df_tl1 = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/01. Database IW/01. Attendance/CO/Closed Data/clean files/%s.xlsx"%TL1
+df_tl2 = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/01. Database IW/01. Attendance/CO/Closed Data/clean files/%s.xlsx"%TL2
 
 MMT_DailyPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/%s.csv'%MMT_Daily
 MMT_DailyOngoingPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/%s.csv'%MMT_DailyOngoing
@@ -138,19 +148,39 @@ AL["status_final_AL"] = AL["status_final_AL"].str.replace("12-", "12 -")
 
 mmt = mmt.merge(AL, how='left', on=['enterprise_id', 'roster_date'])
 
-# Get last weeks of Status Final directly from Shrinkage file
-shrink = pd.read_excel(ShrinkageReportPath,
-                   sheet_name='Attendance',
-                   usecols=["Username", "Day", "Status final"])
+# Adjustment List
+df_qsa1 = pd.read_excel(df_qsa_anal1, usecols={'Username', 'Date', 'Status Final'}, sheet_name='List')
+df_qsa2 = pd.read_excel(df_qsa_anal2, usecols={'Username', 'Date', 'Status Final'}, sheet_name='List')
+df_tl1 = pd.read_excel(df_tl1, usecols={'Username', 'Date', 'Status Final'}, sheet_name='List')
+df_tl2 = pd.read_excel(df_tl2, usecols={'Username', 'Date', 'Status Final'}, sheet_name='List')
 
-shrink = shrink.rename(columns={"Username":"enterprise_id", "Status final":"status_final_sh", "Day":"roster_date"})
+df_qsa_all = df_qsa1.append([df_qsa2, df_tl1, df_tl2])
+
+col_rename = {'Username':'enterprise_id',
+              'Date':'roster_date',
+              'Status Final':'Status_Final_adjust'}
+
+df_qsa_all = df_qsa_all.rename(columns=col_rename)
+
+df_qsa_all["roster_date"] = df_qsa_all["roster_date"].dt.strftime('%m/%d/%Y')
+
+print(mmt.roster_date)
+print(df_qsa_all.roster_date)
+mmt = mmt.merge(df_qsa_all, how='left', on=['enterprise_id', 'roster_date'])
+
+# Get last weeks of Status Final directly from Shrinkage file
+#shrink = pd.read_excel(ShrinkageReportPath,
+#                   sheet_name='Attendance',
+#                   usecols=["Username", "Day", "Status final"])
+
+#shrink = shrink.rename(columns={"Username":"enterprise_id", "Status final":"status_final_sh", "Day":"roster_date"})
 #shrink["roster_date"] = pd.to_datetime(shrink["roster_date"], unit='d', origin='12-30-1899').dt.strftime('%m/%d/%Y')
 
-shrink["status_final_sh"] = shrink["status_final_sh"].astype('string')
-mmt = mmt.merge(shrink, how='left', on=['enterprise_id', 'roster_date'])
+#shrink["status_final_sh"] = shrink["status_final_sh"].astype('string')
+#mmt = mmt.merge(shrink, how='left', on=['enterprise_id', 'roster_date'])
 
-# Fill NULLs from Adjustment List
-mmt["status_final_AL"] = np.where(mmt["status_final_AL"].isnull(), mmt["status_final_sh"], mmt["status_final_AL"])
+# Fill NULLs from Compiled
+mmt["status_final_AL"] = np.where(mmt["status_final_AL"].isnull(), mmt["Status_Final_adjust"], mmt["status_final_AL"])
 mmt["status_final_AL"] = np.where(mmt["status_final_AL"].isnull(), mmt["iw_attendance_status"], mmt["status_final_AL"])
 
 # Merge with IW Status Mapping for the RTA Status
