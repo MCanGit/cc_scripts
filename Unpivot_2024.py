@@ -5,6 +5,7 @@ import tempfile
 import shutil
 from datetime import datetime, timedelta
 import os
+import win32com.client
 
 # Run MMT_IW.py
 #import MMT_IW
@@ -16,7 +17,7 @@ print(datetime.now())
 StartingDate = "12/30/2023"
 EndingDate = "1/10/2025"
 
-File = "122623_CO - Master_Schedule - 2024"
+File = "Master_Schedule - 2024_com_ajustes_1229"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee (2024)"
@@ -46,7 +47,7 @@ CF_FCST_Path = r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)
 
 pdate = datetime.today().date()
 
-OutputName = str('Unpivot ' + File[-6:] + ' ' + str(pdate) + ' v2')
+OutputName = str('Unpivot ' + File[-6:] + ' ' + str(pdate))
 #ExportPath = '//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/09. Daily Unpivot/%s.csv'%OutputName
 
 BackupName = str('Backup Unpivot ' + ' ' + File[-6:])
@@ -215,10 +216,16 @@ if not s_exit.exit_date.index.empty: secret_exit_list()
 
 df4 = df4.drop(columns=['e_id', 'exit_date'])
 
-
-
 df4["value"] = df4["value"].str.replace('VOM2', 'OM2')
 
+# -- Refresh CF FCST File in order to have latest data
+xlapp = win32com.client.DispatchEx("Excel.Application")
+wb = xlapp.Workbooks.Open(r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\16. CF FCST\CF_FCST.xlsx")
+wb.RefreshAll()
+xlapp.CalculateUntilAsyncQueriesDone()
+wb.Save()
+wb.Close()
+xlapp.Quit()
 
 # -- CF FCST Absenteeism
 current_day = datetime.today().date()

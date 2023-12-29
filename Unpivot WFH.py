@@ -5,6 +5,7 @@ import tempfile
 import shutil
 from datetime import datetime, timedelta
 import os
+import win32com.client
 
 # Run MMT_IW.py
 #import MMT_IW
@@ -271,6 +272,15 @@ def secret_exit_list():
 if not s_exit.exit_date.index.empty: secret_exit_list()
 
 df4 = df4.drop(columns=['e_id', 'exit_date'])
+
+# -- Refresh CF FCST File in order to have latest data
+xlapp = win32com.client.DispatchEx("Excel.Application")
+wb = xlapp.Workbooks.Open(r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\16. CF FCST\CF_FCST.xlsx")
+wb.RefreshAll()
+xlapp.CalculateUntilAsyncQueriesDone()
+wb.Save()
+wb.Close()
+xlapp.Quit()
 
 # -- CF FCST Absenteeism
 current_day = datetime.today().date()

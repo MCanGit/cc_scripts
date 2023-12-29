@@ -5,6 +5,7 @@ import tempfile
 import shutil
 from datetime import datetime, timedelta
 import os
+import win32com.client
 
 # Run MMT_IW.py
 #import MMT_IW
@@ -16,7 +17,7 @@ print(datetime.now())
 StartingDate = "4/29/2023"
 EndingDate = "1/12/2024"
 
-File = "CO - Master_Schedule - 122823"
+File = "CO - Master_Schedule - 122623"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee"
@@ -246,6 +247,15 @@ def secret_exit_list():
 if not s_exit.exit_date.index.empty: secret_exit_list()
 
 df4 = df4.drop(columns=['e_id', 'exit_date'])
+
+# -- Refresh CF FCST File in order to have latest data
+xlapp = win32com.client.DispatchEx("Excel.Application")
+wb = xlapp.Workbooks.Open(r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\16. CF FCST\CF_FCST.xlsx")
+wb.RefreshAll()
+xlapp.CalculateUntilAsyncQueriesDone()
+wb.Save()
+wb.Close()
+xlapp.Quit()
 
 # -- CF FCST Absenteeism
 current_day = datetime.today().date()
@@ -552,10 +562,6 @@ dft["role_change"] = np.where(
 )
 df4 = df4.merge(dft[["EID", "date", "role_change"]], on=["EID", "date"])
 
-duplicate_check = df4.groupby(["EID", "date"], as_index=False).size()
-duplicate_check = duplicate_check.query('size != 1')
-print("Duplicates:")
-
 # PBU/SLOB Change Column
 dfct = df4.query('PBU.notnull()')
 dfct["pbu_shift"] = dfct.groupby(["EID"])["PBU"].transform('shift', -1).fillna(df4.PBU)
@@ -661,6 +667,28 @@ shift_res = [
 ]
 
 df4["shift"] = np.select(shift_cond, shift_res, "-")
+
+daily_extract = pd.read_parquet(r"Z:\Operations - Management\WFM\01. IW Report\CO\Daily Report wip\Daily Extract\Parquet\latest_daily.parquet",
+                                columns=['User_Name_daily',
+                                         'Date_daily',
+                                         "status_final",
+                                         'status_daily',
+                                         'status_code_daily',
+                                         'highlevel_m_daily',
+                                         'WH Code_daily'])
+
+daily_extract["Date_daily"] = pd.to_datetime(daily_extract["Date_daily"])
+
+df4 = df4.merge(daily_extract, how='left', left_on=['EID', 'date'], right_on=['User_Name_daily', 'Date_daily'])
+
+df4["status_final_AL"] = np.where(df4["status_final_AL"].isnull(), 
+                                  df4['status_final'], df4["status_final_AL"])
+
+df4["rta_status"] = np.where(df4["rta_status"].isnull(), 
+                                  df4['status_daily'], df4["rta_status"])
+
+df4["rta_status_code"] = np.where(df4["rta_status_code"].isnull(), 
+                                  df4['status_code_daily'], df4["rta_status_code"])
 
 # Adhoc Change - CS -> CO from first November WE
 df4["PBU"] = np.where((df4["date"] >= "2023-10-28") & 
