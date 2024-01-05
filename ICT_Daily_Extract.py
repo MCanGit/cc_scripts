@@ -7,7 +7,8 @@ shift_cutoff = 10
 day = 'today'
 # --
 
-File_Path = r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\15. MMT_IW\Attendance 2023-11-27-2023-12-11.xlsx"
+File = 'Daily Shift Extract'
+File_Path = "//lisfs1003/honey_badger$//Operations - Management/WFM/01. IW Report/CO/Daily Report wip/Daily Extract/Daily Shift Extract/%s.xlsx"%File
 
 
 df = pd.read_excel(File_Path, header=1, usecols=["Primary Group",

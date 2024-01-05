@@ -3,7 +3,7 @@ from pandas.tseries.offsets import *
 
 # --- Manual Change Required---
 RWeek='12-15-2023'
-File = 'GLOBAL_ROSTER Lisbon WE120823'
+File = 'GLOBAL_ROSTER Lisbon WE121523'
 # --- Manual Change Required---
 
 # Path to folder -- adjust if required

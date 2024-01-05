@@ -7,17 +7,17 @@ from datetime import datetime, timedelta
 import os
 import win32com.client
 
-# Run MMT_IW.py
-#import MMT_IW
+#Run MMT_IW.py
+#import MMT_IW_2024
 
 print(datetime.now())
-# -- Manual update required 
+# -- Manual update required if a specific date is needed. Otherwise whole MF year is used
 # Regular date - StartingDate = "4/29/2023"  EndingDate = "1/12/2024"
 # Date in format m/d/yyyy (no leading zeros on month or day)
-StartingDate = "4/29/2023"
-EndingDate = "1/12/2024"
+#StartingDate = "12/30/2023"
+#EndingDate = "1/10/2025"
 
-File = "CO - Master_Schedule - 122623"
+File = "CO - Master_Schedule - 010524_v2"
 
 MFCodes = "CODES MF.WH"
 CrossTraining = "Heatmap_Cross&Trainee"
@@ -32,13 +32,13 @@ CrossTrainingPath = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Re
 ExitsListPath = "//lisfs1003/honey_badger$/Operations - Management/WFM/01. IW Report/CO/%s.xlsb"%ExitsList
 MMT_DailyPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/01. Parquet/%s.parquet'%MMT_Daily
 AdjustmentListPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/04. Adjustment List/%s.xlsx'%AdjustmentList
-Path = "//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/09. Daily Unpivot/"
+Path = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main"
 CF_FCST_Path = r"Z:\Operations - Management\Lisbon Reporting\26. WFM (Reporting)\16. CF FCST\CF_FCST.xlsx"
 
 OutputName = str('Unpivot ' + File[-6:])
 #ExportPath = '//lisfs1003/honey_badger$/Operations - Management/WFM/02. Database/09. Daily Unpivot/%s.csv'%OutputName
 
-BackupName = str('Backup Unpivot ' + ' ' + File[-6:])
+BackupName = str('Backup Unpivot ' + File[-6:])
 #BackupExportPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/01. Backup/%s.csv'%BackupName
 
 df = pd.read_excel(ImportPath, sheet_name= "Master_Schedule",  header= 3)
@@ -46,26 +46,29 @@ df = pd.read_excel(ImportPath, sheet_name= "Master_Schedule",  header= 3)
 # Remove #N/A (#N/A happen when someone is added to MF before being added to Roster)
 df = df.query('NAME != "0x2a"')
 
+df.drop(list(df.filter(regex='WW')), axis=1, inplace=True)
+df.drop(["WD", "SL", "Aux"], axis=1, inplace=True)
+
 # Drop LERT
 #df = df.query('LOB != "Legal Operations"')
 
 #Establish the static column range to be use
 
-df_cut1 = df.loc[ : , :"SHIFT BLOCK"]
+#df_cut1 = df.loc[ : , :"SHIFT BLOCK"]
 
 #Establish the date column range to be use
 
-df_cut2 = df.loc[ : , StartingDate : EndingDate]
+#df_cut2 = df.loc[ : , StartingDate : EndingDate]
 
 #Concat the static  column with the dynamics ones (date columns)
-df3 = pd.concat([df_cut1, df_cut2],axis=1)
+#df3 = pd.concat([df_cut1, df_cut2],axis=1)
 
 #list = ["Analyst", "Quality & Support Analyst", "SME", "quality reviewer", "Trainee", "Team Lead"]
 #df3 = df3.query('ROLE.isin(list)')
 
 #Unpivot
 
-df4 = df3.melt(id_vars= df3.loc[:,"EID":"SHIFT BLOCK"], var_name='date')
+df4 = df.melt(id_vars= df.loc[:,"EID":"SHIFT BLOCK"], var_name='date')
 
 # -- All EIDs in lower case
 df4["EID"] = df4["EID"].str.lower()
@@ -89,7 +92,12 @@ codes_cond = [
     mf_codes.code.str.endswith('2'),
     mf_codes.code.str.endswith('t'),
     mf_codes.code.str.endswith('wri'),
-    mf_codes.code.str.endswith('ml')
+    mf_codes.code.str.endswith('ml'),
+    mf_codes.code.str.endswith('3'),
+    mf_codes.code.str.endswith('4'),
+    mf_codes.code.str.endswith('5'),
+    mf_codes.code.str.endswith('6'),
+    mf_codes.code.str.endswith('9')
     ]
 
 codes_result = [
@@ -104,7 +112,12 @@ codes_result = [
     "LOA",
     "LOA",
     "LOA",
-    "LOA"
+    "LOA",
+    "LOA",
+    "LOA",
+    "LOA",
+    "LOA",
+    "LOA",
     ]
 
 mf_codes["codes_group"] = np.select(codes_cond, codes_result, 'Work')
@@ -117,9 +130,11 @@ df4["SRT ID"] = '#' + df4["SRT ID"]
 df4["SRT ID"] = df4["SRT ID"].str[:-2]
 
 # create week ending based on day of week
-df4["date"] = pd.to_datetime(df4["date"], format='%m/%d/%Y', errors='ignore').astype('string')
-df4["date"] = df4["date"].str.replace("44929", "1/3/2023")
-df4["date"] = pd.to_datetime(df4["date"])
+df4["date"] = df4["date"].astype(int)
+df4["date"] = pd.to_datetime(df4["date"], unit='D', origin='12-30-1899')
+#df4["date"] = pd.to_datetime(df4["date"], format='%m/%d/%Y', errors='ignore').astype('string')
+#df4["date"] = df4["date"].str.replace("45290", "12/30/2023")
+#df4["date"] = pd.to_datetime(df4["date"])
 df4["week_ending"] = df4["date"] - pd.to_timedelta((df4["date"].dt.weekday-4)%-7, unit="d")
 
 # -- Import Cross Skilling
@@ -203,31 +218,31 @@ df4["roll_off/reassignment"] = np.where((df4["employment_end_date_el"].notnull()
 df4["value"] = df4["value"].str.replace("V0", "-")
 
 # DMR
-df4["OpsDeploymentDate"] = df4.groupby('EID')['OpsDeploymentDate'].fillna(method="ffill")
-df4["Graduation_Date"] = df4.groupby('EID')['Graduation_Date'].fillna(method="ffill")
+#df4["OpsDeploymentDate"] = df4.groupby('EID')['OpsDeploymentDate'].fillna(method="ffill")
+#df4["Graduation_Date"] = df4.groupby('EID')['Graduation_Date'].fillna(method="ffill")
 
-dmr_cond = [
-    df4["date"] < df4["OpsDeploymentDate"],
-    (df4["date"] >= df4["OpsDeploymentDate"]) & (df4["date"] < df4["Graduation_Date"]),
-    (df4["date"] >= df4["Graduation_Date"]),
-    (df4["OpsDeploymentDate"].isnull()) & (df4["ROLL IN DATE"] < 44927),
-    (df4["OpsDeploymentDate"].isnull()) & (df4["employee_status_mmt"] == "Active") &
-    (df4["date"] > (pd.to_datetime(df4["ROLL IN DATE"].astype(int),  unit='d', origin='12/30/1899') + timedelta(days=19))),
-    (df4["OpsDeploymentDate"].isnull()) & (df4["employee_status_mmt"] == "Active") &
-    (df4["date"] <= (pd.to_datetime(df4["ROLL IN DATE"].astype(int),  unit='d', origin='12/30/1899') + timedelta(days=19)))
-]
+#dmr_cond = [
+ #   df4["date"] < df4["OpsDeploymentDate"],
+ #   (df4["date"] >= df4["OpsDeploymentDate"]) & (df4["date"] < df4["Graduation_Date"]),
+  #  (df4["date"] >= df4["Graduation_Date"]),
+ #   (df4["OpsDeploymentDate"].isnull()) & (df4["ROLL IN DATE"] < 44927),
+ #   (df4["OpsDeploymentDate"].isnull()) & (df4["employee_status_mmt"] == "Active") &
+ #   (df4["date"] > (pd.to_datetime(df4["ROLL IN DATE"].astype(int),  unit='D', origin='12/30/1899') + timedelta(days=19))),
+ #   (df4["OpsDeploymentDate"].isnull()) & (df4["employee_status_mmt"] == "Active") &
+ #   (df4["date"] <= (pd.to_datetime(df4["ROLL IN DATE"].astype(int),  unit='D', origin='12/30/1899') + timedelta(days=19)))
+#]
 
-dmr_res = [
-    'Trainee',
-    'DMR',
-    'Tenured',
-    'Tenured',
-    'Tenured',
-    'Trainee'
-    ]
+#dmr_res = [
+#    'Trainee',
+ #   'DMR',
+ #   'Tenured',
+ #   'Tenured',
+ #   'Tenured',
+ #   'Trainee'
+ #   ]
 
-df4["tenure"] = np.select(dmr_cond, dmr_res, None)
-df4["tenure"] = df4.groupby('EID')['tenure'].fillna(method="ffill")
+#df4["tenure"] = np.select(dmr_cond, dmr_res, None)
+#df4["tenure"] = df4.groupby('EID')['tenure'].fillna(method="ffill")
 
 # secret exit list
 secretExitList = pd.read_excel(CrossTrainingPath, sheet_name='Secret Exit List')
@@ -366,8 +381,8 @@ df4["Leave"] = np.where(df4["value"].isin(["L1", "L2"]), 1, 0)
 
 # Roll in and off Dates as Date
 df4["ROLL OFF DATE"] = df4["ROLL OFF DATE"].replace(0, 2)
-df4["ROLL IN DATE"] = pd.to_datetime(df4["ROLL IN DATE"].astype(int),  unit='d', origin='12/30/1899').dt.strftime('%m/%d/%Y')
-df4["ROLL OFF DATE"] = pd.to_datetime(df4["ROLL OFF DATE"].astype(int), unit='d', origin='12/30/1899').dt.strftime('%m/%d/%Y')
+df4["ROLL IN DATE"] = pd.to_datetime(df4["ROLL IN DATE"].astype(int),  unit='D', origin='12/30/1899').dt.strftime('%m/%d/%Y')
+df4["ROLL OFF DATE"] = pd.to_datetime(df4["ROLL OFF DATE"].astype(int), unit='D', origin='12/30/1899').dt.strftime('%m/%d/%Y')
 df4["value"] = df4["value"].fillna('-')
 
 # Update roll off column
@@ -668,6 +683,8 @@ shift_res = [
 
 df4["shift"] = np.select(shift_cond, shift_res, "-")
 
+
+# -- Daily Extract
 daily_extract = pd.read_parquet(r"Z:\Operations - Management\WFM\01. IW Report\CO\Daily Report wip\Daily Extract\Parquet\latest_daily.parquet",
                                 columns=['User_Name_daily',
                                          'Date_daily',
@@ -713,7 +730,7 @@ df4 = df4[['EID', 'role_mmt', 'NAME', 'SRT ID', 'WAVE', 'employee_status_mmt', '
  'SAP ID', 'SHIFT BLOCK', 'date', 'value', 'shift', 'week_ending', 'Schedule',
  'WD', 'LOA', 'PTO', 'ABS', 'Leave', 'iw_highlevel_status', 'iw_attendance_status','status_final_AL', 'rta_status',
  'rta_status_code', 'srtf_total_hrs', 'srtf_completed_time', 'iw_actual_time', 'WH', 'WSC_new', 'role_change', 'cross_change',
-           'roll_off/reassignment', 'tenure', 'billable', 'ABS_FCST']]
+           'roll_off/reassignment', 'billable', 'ABS_FCST']]
 
 rename_cols = {
     "role_mmt":"ROLE",
@@ -755,38 +772,38 @@ with tempfile.TemporaryDirectory() as tempdir:
     backupdst = "//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/"
     shutil.copy(src=backupsrc, dst=backupdst)
 
-dfp = df4
-dfp["SRT ID"] = dfp["SRT ID"].astype(str)
-dfp.columns = dfp.columns.str.replace(" ", "_")
-dfp.columns = dfp.columns.str.replace("/", "_")
-dfp["SRT_ID"] = dfp["SRT_ID"].str.rstrip('.0')
-dfp = dfp.rename(columns={"date":"date_str"})
-dfp["date_aux"] = pd.to_datetime(dfp["date_str"])
-dfp["date"] = pd.to_datetime(dfp["date_str"], format=("%Y-%m-%d")).dt.strftime('%m-%d-%Y')
+#dfp = df4
+#dfp["SRT ID"] = dfp["SRT ID"].astype(str)
+#dfp.columns = dfp.columns.str.replace(" ", "_")
+#dfp.columns = dfp.columns.str.replace("/", "_")
+#dfp["SRT_ID"] = dfp["SRT_ID"].str.rstrip('.0')
+#dfp = dfp.rename(columns={"date":"date_str"})
+#dfp["date_aux"] = pd.to_datetime(dfp["date_str"])
+#dfp["date"] = pd.to_datetime(dfp["date_str"], format=("%Y-%m-%d")).dt.strftime('%m-%d-%Y')
 
-mfdate = File[-6:]
-dfp["mfdate"] = File[-6:]
-dfp["mfdate"] = pd.to_datetime(dfp["mfdate"], format='%m%d%y')
+#mfdate = File[-6:]
+#dfp["mfdate"] = File[-6:]
+#dfp["mfdate"] = pd.to_datetime(dfp["mfdate"], format='%m%d%y')#
 
-pdate = datetime.today().date()
-dfp["creation_date"] = pdate
-dfp["creation_date"] = pd.to_datetime(dfp["creation_date"], format=("%Y-%m-%d"))
-dfp["ABS_aux"] = np.where((dfp["ABS"] == 0) & (dfp["iw_highlevel_status"].notnull()), 1, 0)
+#pdate = datetime.today().date()
+#dfp["creation_date"] = pdate
+#dfp["creation_date"] = pd.to_datetime(dfp["creation_date"], format=("%Y-%m-%d"))
+#dfp["ABS_aux"] = np.where((dfp["ABS"] == 0) & (dfp["iw_highlevel_status"].notnull()), 1, 0)
 
-firstbill = dfp[["EID", "date_aux", "billable"]]
-firstbill = firstbill.query('billable == "billable"')
-firstbill = firstbill.groupby("EID", as_index=False)["date_aux"].min()
-firstbill = firstbill.rename(columns={"date_aux":"first_bill_day", "EID":"EID_firstbill"})
+#firstbill = dfp[["EID", "date_aux", "billable"]]
+#firstbill = firstbill.query('billable == "billable"')
+#firstbill = firstbill.groupby("EID", as_index=False)["date_aux"].min()
+#firstbill = firstbill.rename(columns={"date_aux":"first_bill_day", "EID":"EID_firstbill"})
 
-dfp = dfp.merge(firstbill, how='left', left_on=["EID", "date_aux"], right_on=["EID_firstbill", "first_bill_day"])
+#dfp = dfp.merge(firstbill, how='left', left_on=["EID", "date_aux"], right_on=["EID_firstbill", "first_bill_day"])
 #dfp.to_csv('//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/15. MMT_IW/bill_test.csv')
 
-ParquetPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/02. Parquet/Unpivot.parquet'
-dfp.to_parquet(ParquetPath)
+#ParquetPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/02. Parquet/Unpivot.parquet'
+#dfp.to_parquet(ParquetPath)
 
-DailyParquet = str('Unpivot MF ' + File[-6:] + ' ' + str(pdate))
-DailyParquetPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/02. Parquet/Daily Parquet/%s.parquet'%DailyParquet
-dfp.to_parquet(DailyParquetPath)
+#DailyParquet = str('Unpivot MF ' + File[-6:] + ' ' + str(pdate))
+#DailyParquetPath = '//lisfs1003/honey_badger$/Operations - Management/Lisbon Reporting/26. WFM (Reporting)/13. Unpivot_MF Main/02. Parquet/Daily Parquet/%s.parquet'%DailyParquet
+#dfp.to_parquet(DailyParquetPath)
 
 Path = os.path.realpath(Path)
 os.startfile(Path)
